@@ -11,27 +11,26 @@ class FigGradDesc(GradDesc):
         super().__init__(filePath, step=step, paramsName=paramsName)
         self.__dataSet = super().get_dataSet()
 
-    # 返回最终结果，默认把结果转换为函数表达式返回，可重写为自己想要的输出方式
-    def showResult(self):
-        # 计算表达式
-        super().calModule()
+    # 默认只输出公式，可重写为自己想要的输出方式
+    def _showResultCustom(self):
         func = super().get_func()
-        super().showResult()
         # 图形化界面
         x = list(self.__dataSet[:, 0])
         y = list(self.__dataSet[:, -1])
         plt.scatter(x, y)
         scale = np.max(x)-np.min(x)
-        x = np.arange(np.min(x)-scale/10, np.max(x)+scale/10, scale/100)
+        scale = scale/100
+        if scale > 1:
+            scale = 1
+        x = np.arange(np.min(x)-scale/10, np.max(x)+scale/10, scale)
 
         def fx(x):
             return func.subs(sp.Symbol("x"), x)
 
+        # 使用map()对每一个x做计算，否则会被当做矩阵进行计算，得到的f仅有一个数据，绘图失败
         f = list(map(fx, x))
         plt.plot(x, f)
 
-        normf = x**2+x-1
-        plt.plot(x, normf)
         plt.title(func)
         plt.show()
         return func

@@ -16,11 +16,8 @@ class PolynomialGradDesc(GradDesc):
         self.__dataSet = super().get_dataSet()
         assert order == self.__dataSet.shape[1]-1, "order don't map with data"
 
-    # 返回最终结果，默认把结果转换为函数表达式返回，可重写为自己想要的输出方式
-    def showResult(self):
-        # 计算表达式
-        super().calModule()
-        super().showResult()
+    # 默认只输出公式，可重写为自己想要的输出方式
+    def _showResultCustom(self):
         func = super().get_func()
         # 图形化界面
         x = list(self.__dataSet[:, 0])

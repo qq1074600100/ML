@@ -19,15 +19,19 @@ class GradDesc(object):
             1, "The number of paramsName don't map with dataSet"
         self.__paramsName = paramsName
         self.__JFuncs = []
+        # 标记位，标记最新数据集和参数条件下，是否进行过学习过程
+        self.__hasCal = False
 
     def get_step(self):
         return self.__step
 
     def set_step(self, step):
         self.__step = step
+        self.__hasCal = False
 
     def set_file(self, filePath):
         self.__dataSet = self.__createDataSet(filePath)
+        self.__hasCal = False
 
     def get_dataSet(self):
         return self.__dataSet
@@ -131,17 +135,31 @@ class GradDesc(object):
             func = func + rstParams[i+1] * (sp.Symbol(self.__paramsName[i][0]) **
                                             self.__paramsName[i][1]-normalizeParams[i][0])/normalizeParams[i][1]
         self.__func = func
+        # 标记已进行过学习过程
+        self.__hasCal = True
 
+    # 模板方法，先做学习过程分析，再根据自定义的方式输出结果
     def showResult(self):
-        #输出结果公式
-        func = self.__func
-        print(func)
+        # 若尚未计算或数据有变，则需要重新计算
+        if not self.__hasCal:
+            self.calModule()
+        # 显示结果
+        self.__showJFuncChange()
+        self._showResultCustom()
 
-        #对学习算法过程中costFunction的变化做分析
-        print("you are totally consume "+str(len(self.__JFuncs))+"circles!")
+    # 学习过程分析
+    def __showJFuncChange(self):
+        # 对学习算法过程中costFunction的变化做分析
         tempJFuncs = np.array(self.__JFuncs, dtype='float64')
         x = tempJFuncs[:, 0]
         y = tempJFuncs[:, 1]
         plt.plot(x, y)
-        plt.title("change of JFunc")
+        plt.title("change of JFunc\ntotally consume " +
+                  str(len(self.__JFuncs))+" circles")
         plt.show()
+
+    # 自定义数据显示方式，默认只输出结果公式，可重写为想要的方式
+    def _showResultCustom(self):
+        # 输出结果公式
+        func = self.__func
+        print(func)
