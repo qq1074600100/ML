@@ -5,7 +5,6 @@ import numpy as np
 import linerFit as lf
 import gradientDesc as gd
 import gradientDescMetrix as gdm
-import datetime
 
 # group, labels = kNN.createDataSet()
 
