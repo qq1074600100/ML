@@ -18,6 +18,7 @@ class GradDesc(object):
         assert len(paramsName) == paramsN - \
             1, "The number of paramsName don't map with dataSet"
         self.__paramsName = paramsName
+        self.__JFuncs = []
 
     def get_step(self):
         return self.__step
@@ -33,6 +34,12 @@ class GradDesc(object):
 
     def get_paramsName(self):
         return self.__paramsName
+
+    def get_func(self):
+        return self.__func
+
+    def get_JFuncs(self):
+        return self.__JFuncs
 
     # 根据文件内容构建数据集
     def __createDataSet(self, filePath):
@@ -85,15 +92,24 @@ class GradDesc(object):
         # 扩展params向量，増一行-1用于计算偏导数值
         tempParamsCol = np.zeros((n+1, 1), dtype='float64')
 
+        lastJFunc = 0
+
+        countOfWhile = 0
         while True:
+            countOfWhile = countOfWhile+1
             tempParamsCol[n, 0] = -1
             tempParamsCol[:-1, :] = paramsCol
             # 求出各未知参数对应的偏导数值的列向量
             diffCol = calDiffMetrix.dot(tempParamsCol)
             # 循环终止条件
-            # if np.count_nonzero(abs(diffCol) < 0.0001) > n/2:
-            if np.any(abs(diffCol) < 0.0000000001):
+            # # if np.count_nonzero(abs(diffCol) < 0.0001) > n/2:
+            # if np.any(abs(diffCol) < 0.0000000001):
+            #     break
+            JFunc = (1/2*m)*(np.sum((plusDataSet.dot(tempParamsCol))**2))
+            self.__JFuncs.append([countOfWhile, JFunc])
+            if JFunc - lastJFunc > -0.0001 and lastJFunc != 0:
                 break
+            lastJFunc = JFunc
             # 同步更新所有未知参数值
             paramsCol = paramsCol-self.__step*diffCol
             # # 若本轮偏导数值绝对值大于上轮则缩短步长
@@ -114,8 +130,18 @@ class GradDesc(object):
         for i in range(len(self.__paramsName)):
             func = func + rstParams[i+1] * (sp.Symbol(self.__paramsName[i][0]) **
                                             self.__paramsName[i][1]-normalizeParams[i][0])/normalizeParams[i][1]
-        return func
+        self.__func = func
 
     def showResult(self):
-        func = self.calModule()
+        #输出结果公式
+        func = self.__func
         print(func)
+
+        #对学习算法过程中costFunction的变化做分析
+        print("you are totally consume "+str(len(self.__JFuncs))+"circles!")
+        tempJFuncs = np.array(self.__JFuncs, dtype='float64')
+        x = tempJFuncs[:, 0]
+        y = tempJFuncs[:, 1]
+        plt.plot(x, y)
+        plt.title("change of JFunc")
+        plt.show()

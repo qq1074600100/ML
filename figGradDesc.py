@@ -14,10 +14,10 @@ class FigGradDesc(GradDesc):
     # 返回最终结果，默认把结果转换为函数表达式返回，可重写为自己想要的输出方式
     def showResult(self):
         # 计算表达式
-        func = super().calModule()
-        print(func)
+        super().calModule()
+        func = super().get_func()
+        super().showResult()
         # 图形化界面
-        fig = plt.figure()
         x = list(self.__dataSet[:, 0])
         y = list(self.__dataSet[:, -1])
         plt.scatter(x, y)

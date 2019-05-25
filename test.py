@@ -38,7 +38,7 @@ from polynomialGradDesc import PolynomialGradDesc
 
 filePath = r"D:\computerScience\python3.7\mechanicLearning\ttt.txt"
 # gd = GradDesc(filePath, step=0.2, paramsName=[("x", 1), ("y", 1), ("z", 1)])
-gd = PolynomialGradDesc(filePath, 3, step=0.1)
+gd = PolynomialGradDesc(filePath, 3, step=0.2)
 func = gd.showResult()
 # print("f = ", func)
 # print(func.subs(sp.Symbol("x"), 0))
