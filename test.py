@@ -5,6 +5,7 @@ import numpy as np
 import linerFit as lf
 import gradientDesc as gd
 import gradientDescMetrix as gdm
+from gradDescObj import GradDesc
 
 # group, labels = kNN.createDataSet()
 
@@ -30,4 +31,11 @@ import gradientDescMetrix as gdm
 # lf.test()
 
 
-gdm.test(0.006)
+# gdm.test(0.006)
+
+filePath = r"D:\computerScience\python3.7\mechanicLearning\ttt.txt"
+gd = GradDesc(filePath, paramsName=["y"])
+gd.calculate()
+print(gd.get_paramsName())
+print(gd.get_rstParams())
+gd.finalModel()
