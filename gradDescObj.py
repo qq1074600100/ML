@@ -5,7 +5,7 @@ import sympy as sp
 
 
 class GradDesc(object):
-    def __init__(self, filePath, step=0.002, paramsName=None):
+    def __init__(self, filePath, step=0.1, paramsName=None):
         # 初始化各属性
         # 根据文件构建数据集并做特征值归一化
         self.__dataSet = self.__createDataSet(filePath)
@@ -56,7 +56,7 @@ class GradDesc(object):
         for i in range(n-1):
             tempCol = normDataSet[:, i]
             avg = np.average(tempCol)
-            scale = (np.max(tempCol)-np.min(tempCol))/4
+            scale = (np.max(tempCol)-np.min(tempCol))/6
             normDataSet[:, i] = (tempCol-avg)/scale
             normlizeParams.append((avg, scale))
         return normDataSet, normlizeParams
@@ -92,7 +92,7 @@ class GradDesc(object):
             diffCol = calDiffMetrix.dot(tempParamsCol)
             # 循环终止条件
             # if np.count_nonzero(abs(diffCol) < 0.0001) > n/2:
-            if np.any(abs(diffCol) < 0.00000001):
+            if np.any(abs(diffCol) < 0.0000000001):
                 break
             # 同步更新所有未知参数值
             paramsCol = paramsCol-self.__step*diffCol

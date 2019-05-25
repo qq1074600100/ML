@@ -5,11 +5,16 @@ import numpy as np
 import sympy as sp
 
 
-# 继承通用梯度下降法对象，实现结果的可视化输出
-class FigGradDesc(GradDesc):
-    def __init__(self, filePath, step=0.1, paramsName=None):
-        super().__init__(filePath, step=step, paramsName=paramsName)
+# 继承通用梯度下降法对象，实现多项式的拟合及可视化输出
+class PolynomialGradDesc(GradDesc):
+    def __init__(self, filePath, order, step=0.1):
+        tempParamsName = []
+        for i in range(order):
+            tempParamsName.append(("x", i+1))
+
+        super().__init__(filePath, step=step, paramsName=tempParamsName)
         self.__dataSet = super().get_dataSet()
+        assert order == self.__dataSet.shape[1]-1, "order don't map with data"
 
     # 返回最终结果，默认把结果转换为函数表达式返回，可重写为自己想要的输出方式
     def showResult(self):
@@ -22,16 +27,18 @@ class FigGradDesc(GradDesc):
         y = list(self.__dataSet[:, -1])
         plt.scatter(x, y)
         scale = np.max(x)-np.min(x)
-        x = np.arange(np.min(x)-scale/10, np.max(x)+scale/10, scale/100)
+        scale = scale/100
+        if scale > 1:
+            scale = 1
+        x = np.arange(np.min(x)-scale/10, np.max(x)+scale/10, scale)
 
         def fx(x):
             return func.subs(sp.Symbol("x"), x)
 
+        # 使用map()对每一个x做计算，否则会被当做矩阵进行计算，得到的f仅有一个数据，绘图失败
         f = list(map(fx, x))
         plt.plot(x, f)
 
-        normf = x**2+x-1
-        plt.plot(x, normf)
         plt.title(func)
         plt.show()
         return func
