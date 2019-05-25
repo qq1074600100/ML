@@ -36,7 +36,7 @@ from figGradDesc import FigGradDesc
 # gdm.test(0.006)
 
 filePath = r"D:\computerScience\python3.7\mechanicLearning\ttt.txt"
-gd = FigGradDesc(filePath, step=0.1, paramsName=[("x", 1), ("x", 2)])
+gd = FigGradDesc(filePath, step=0.2, paramsName=[("x", 1), ("x", 2)])
 func = gd.showResult()
 # print("f = ", func)
 # print(func.subs(sp.Symbol("x"), 0))

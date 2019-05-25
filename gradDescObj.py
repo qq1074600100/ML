@@ -56,7 +56,7 @@ class GradDesc(object):
         for i in range(n-1):
             tempCol = normDataSet[:, i]
             avg = np.average(tempCol)
-            scale = (np.max(tempCol)-np.min(tempCol))/2
+            scale = (np.max(tempCol)-np.min(tempCol))/4
             normDataSet[:, i] = (tempCol-avg)/scale
             normlizeParams.append((avg, scale))
         return normDataSet, normlizeParams

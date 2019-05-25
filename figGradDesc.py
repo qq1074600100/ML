@@ -22,13 +22,16 @@ class FigGradDesc(GradDesc):
         y = list(self.__dataSet[:, -1])
         plt.scatter(x, y)
         scale = np.max(x)-np.min(x)
-        x = np.arange(np.min(x)-scale/10, np.max(x)+scale/10, scale/10)
+        x = np.arange(np.min(x)-scale/10, np.max(x)+scale/10, scale/100)
 
         def fx(x):
             return func.subs(sp.Symbol("x"), x)
 
         f = list(map(fx, x))
         plt.plot(x, f)
+
+        normf = x**2+x-1
+        plt.plot(x, normf)
         plt.title(func)
         plt.show()
         return func
