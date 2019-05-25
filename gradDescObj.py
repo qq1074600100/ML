@@ -7,13 +7,14 @@ import sympy as sp
 class GradDesc(object):
     def __init__(self, filePath, step=0.002, paramsName=None):
         # 初始化各属性
+        # 根据文件构建数据集并做特征值归一化
         self.__dataSet = self.__createDataSet(filePath)
         paramsN = self.__dataSet.shape[1]
         self.__step = step
         self.__rstParams = None
-        # 若传入参数名与参数个数不匹配则报错
+        # 若传入特征名与特征值个数不匹配则报错
         if paramsName is None:
-            paramsName = ["x"+str(i) for i in range(1, paramsN)]
+            paramsName = [("x"+str(i), 1) for i in range(1, paramsN)]
         assert len(paramsName) == paramsN - \
             1, "The number of paramsName don't map with dataSet"
         self.__paramsName = paramsName
@@ -33,9 +34,6 @@ class GradDesc(object):
     def get_paramsName(self):
         return self.__paramsName
 
-    def get_rstParams(self):
-        return self.__rstParams
-
     # 根据文件内容构建数据集
     def __createDataSet(self, filePath):
         fr = open(filePath)
@@ -49,17 +47,32 @@ class GradDesc(object):
             dataSet[i, :] = fields
         return dataSet
 
+    # 对数据集做归一化操作,把特征值归一化为-1~1之间，并返回归一化特征集和归一化参数，
+    # 归一化参数格式为[(avg,scale),...](每个特征值对应一个tuple)
+    def __normalizeDataSet(self, dataSet):
+        normDataSet = np.array(dataSet, dtype='float64')
+        n = normDataSet.shape[1]
+        normlizeParams = []
+        for i in range(n-1):
+            tempCol = normDataSet[:, i]
+            avg = np.average(tempCol)
+            scale = (np.max(tempCol)-np.min(tempCol))/2
+            normDataSet[:, i] = (tempCol-avg)/scale
+            normlizeParams.append((avg, scale))
+        return normDataSet, normlizeParams
+
     # 用梯度下降法进行计算，将计算结果保存为列表
-    def calculate(self):
-        m = self.__dataSet.shape[0]
-        n = self.__dataSet.shape[1]
+
+    def __gradDescent(self, normDataSet):
+        m = normDataSet.shape[0]
+        n = normDataSet.shape[1]
 
         # 给数据矩阵最左加一列1，对应p0
         plusDataSet = np.ones((m, n+1), dtype='float64')
-        plusDataSet[:, 1:] = self.__dataSet[:, :]
+        plusDataSet[:, 1:] = normDataSet[:, :]
 
         # 取得数据矩阵中自变量部分
-        metrixX = np.array(plusDataSet[:, :-1])
+        metrixX = np.array(plusDataSet[:, :-1], dtype='float64')
 
         # 转置
         transMetrixX = metrixX.transpose()/m
@@ -79,7 +92,7 @@ class GradDesc(object):
             diffCol = calDiffMetrix.dot(tempParamsCol)
             # 循环终止条件
             # if np.count_nonzero(abs(diffCol) < 0.0001) > n/2:
-            if np.any(abs(diffCol) < 0.0001):
+            if np.any(abs(diffCol) < 0.00000001):
                 break
             # 同步更新所有未知参数值
             paramsCol = paramsCol-self.__step*diffCol
@@ -88,13 +101,21 @@ class GradDesc(object):
             #     step = step/2
             # lastTempDiffs[:] = tempDiffs[:]
 
-        # 将计算结果保存为列表
-        self.__rstParams = [x for x in paramsCol[:, 0]]
+        # 将结果以列表形式返回
+        return [x for x in paramsCol[:, 0]]
 
     # 返回最终结果，默认把结果转换为函数表达式返回，可重写为自己想要的输出方式
-    def finalModel(self):
-        result = "f = "+str(self.__rstParams[0])
+    def calModule(self):
+        normDataSet, normalizeParams = self.__normalizeDataSet(
+            self.__dataSet)
+        rstParams = self.__gradDescent(normDataSet)
+
+        func = rstParams[0]
         for i in range(len(self.__paramsName)):
-            result = result+"+" + \
-                str(self.__rstParams[i+1])+"*"+self.__paramsName[i]
-        print(result)
+            func = func + rstParams[i+1] * (sp.Symbol(self.__paramsName[i][0]) **
+                                            self.__paramsName[i][1]-normalizeParams[i][0])/normalizeParams[i][1]
+        return func
+
+    def showResult(self):
+        func = self.calModule()
+        print(func)

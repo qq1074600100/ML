@@ -2,9 +2,11 @@ import kNN
 import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
+import sympy as sp
 import linerFit as lf
 import gradientDesc as gd
 import gradientDescMetrix as gdm
+from gradDescObj import GradDesc
 from figGradDesc import FigGradDesc
 
 # group, labels = kNN.createDataSet()
@@ -34,8 +36,7 @@ from figGradDesc import FigGradDesc
 # gdm.test(0.006)
 
 filePath = r"D:\computerScience\python3.7\mechanicLearning\ttt.txt"
-gd = FigGradDesc(filePath, step=0.00005, paramsName=["x", "x^2"])
-gd.calculate()
-print(gd.get_paramsName())
-print(gd.get_rstParams())
-gd.finalModel()
+gd = FigGradDesc(filePath, step=0.1, paramsName=[("x", 1), ("x", 2)])
+func = gd.showResult()
+# print("f = ", func)
+# print(func.subs(sp.Symbol("x"), 0))
