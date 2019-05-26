@@ -9,6 +9,7 @@ import gradientDescMetrix as gdm
 from gradDescObj import GradDesc
 from figGradDesc import FigGradDesc
 from polynomialGradDesc import PolynomialGradDesc
+from faceGradDesc import FaceGradDesc
 
 # group, labels = kNN.createDataSet()
 
@@ -37,8 +38,8 @@ from polynomialGradDesc import PolynomialGradDesc
 # gdm.test(0.006)
 
 filePath = r"D:\computerScience\python3.7\mechanicLearning\ttt.txt"
-# gd = GradDesc(filePath, step=0.2, paramsName=[("x", 1), ("y", 1), ("z", 1)])
-gd = PolynomialGradDesc(filePath, 3, step=0.2)
-func = gd.showResult()
+gd = FaceGradDesc(filePath, ["x^1", "y^1", "x^1*y^1", "x^2*y^1"], step=0.1)
+# gd = PolynomialGradDesc(filePath, 3, step=0.2)
+gd.showResult()
 # print("f = ", func)
 # print(func.subs(sp.Symbol("x"), 0))

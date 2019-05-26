@@ -7,8 +7,8 @@ import sympy as sp
 
 # 继承通用梯度下降法对象，实现结果的可视化输出
 class FigGradDesc(GradDesc):
-    def __init__(self, filePath, step=0.1, paramsName=None):
-        super().__init__(filePath, step=step, paramsName=paramsName)
+    def __init__(self, filePath, paramsName, step=0.1):
+        super().__init__(filePath, paramsName, step=step)
         self.__dataSet = super().get_dataSet()
 
     # 默认只输出公式，可重写为自己想要的输出方式

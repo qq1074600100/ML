@@ -3,9 +3,18 @@ import matplotlib
 import matplotlib.pyplot as plt
 import sympy as sp
 
+# 梯度下降法基类，可以由该类派生其他类处理特定表达式的拟合
+# 接受数据文件路径，参数名列表，及学习速率(默认0.1)
+# 对外方法：
+#   calModule():内部调用具体算法，并将返回结果转化为表达式字符串
+#   showResult():若传入数据，尚未进行计算，则调用计算过程，将计算过程分析显示，并将结果按自定义方式返回，默认为表达式字符串
+#   _showResultCustom():模板方法模式，该方法可被重写为自己想要的显示方式
+#   getResultFunc():返回可以计算的表达式对象，而不是字符串
+#   （注意：该方法只对幂函数表达式有效，涉及指数或三角函数等时无效，调用会出错！！！）
+
 
 class GradDesc(object):
-    def __init__(self, filePath, step=0.1, paramsName=None):
+    def __init__(self, filePath, paramsName, step=0.1):
         # 初始化各属性
         # 根据文件构建数据集并做特征值归一化
         self.__dataSet = self.__createDataSet(filePath)
@@ -13,8 +22,6 @@ class GradDesc(object):
         self.__step = step
         self.__rstParams = None
         # 若传入特征名与特征值个数不匹配则报错
-        if paramsName is None:
-            paramsName = [("x"+str(i), 1) for i in range(1, paramsN)]
         assert len(paramsName) == paramsN - \
             1, "The number of paramsName don't map with dataSet"
         self.__paramsName = paramsName
@@ -39,9 +46,6 @@ class GradDesc(object):
     def get_paramsName(self):
         return self.__paramsName
 
-    def get_func(self):
-        return self.__func
-
     def get_JFuncs(self):
         return self.__JFuncs
 
@@ -63,18 +67,23 @@ class GradDesc(object):
     def __normalizeDataSet(self, dataSet):
         normDataSet = np.array(dataSet, dtype='float64')
         n = normDataSet.shape[1]
-        normlizeParams = []
+        normalizeParams = []
         for i in range(n-1):
             tempCol = normDataSet[:, i]
             avg = np.average(tempCol)
             scale = (np.max(tempCol)-np.min(tempCol))/6
             normDataSet[:, i] = (tempCol-avg)/scale
-            normlizeParams.append((avg, scale))
-        return normDataSet, normlizeParams
+            normalizeParams.append((avg, scale))
+        self.__normDataSet = normDataSet
+        self.__normalizeParams = normalizeParams
+        return normDataSet, normalizeParams
 
     # 用梯度下降法进行计算，将计算结果保存为列表
 
-    def __gradDescent(self, normDataSet):
+    def __gradDescent(self):
+        normDataSet, normalizeParams = self.__normalizeDataSet(
+            self.__dataSet)
+
         m = normDataSet.shape[0]
         n = normDataSet.shape[1]
 
@@ -111,7 +120,7 @@ class GradDesc(object):
             #     break
             JFunc = (1/2*m)*(np.sum((plusDataSet.dot(tempParamsCol))**2))
             self.__JFuncs.append([countOfWhile, JFunc])
-            if JFunc - lastJFunc > -0.0001 and lastJFunc != 0:
+            if JFunc - lastJFunc > -0.000001 and lastJFunc != 0:
                 break
             lastJFunc = JFunc
             # 同步更新所有未知参数值
@@ -121,20 +130,24 @@ class GradDesc(object):
             #     step = step/2
             # lastTempDiffs[:] = tempDiffs[:]
 
-        # 将结果以列表形式返回
-        return [x for x in paramsCol[:, 0]]
+        paramsRow = paramsCol.reshape((n))
+        tempRstParams = [x for x in paramsRow[:]]
+        for i in range(1, len(tempRstParams)):
+            tempRstParams[i] = tempRstParams[i]/normalizeParams[i-1][1]
+            tempRstParams[0] = float(tempRstParams[0]) - \
+                float(tempRstParams[i]) * float(normalizeParams[i-1][0])
+
+        self.__rstParams = tempRstParams
 
     # 返回最终结果，默认把结果转换为函数表达式返回，可重写为自己想要的输出方式
     def calModule(self):
-        normDataSet, normalizeParams = self.__normalizeDataSet(
-            self.__dataSet)
-        rstParams = self.__gradDescent(normDataSet)
-
-        func = rstParams[0]
+        self.__gradDescent()
+        rstParams = self.__rstParams
+        module = "f=" + str(float(rstParams[0]))
         for i in range(len(self.__paramsName)):
-            func = func + rstParams[i+1] * (sp.Symbol(self.__paramsName[i][0]) **
-                                            self.__paramsName[i][1]-normalizeParams[i][0])/normalizeParams[i][1]
-        self.__func = func
+            module = module + "+" + \
+                "("+str(float(rstParams[i+1]))+")" + "*" + self.__paramsName[i]
+        self.__module = module
         # 标记已进行过学习过程
         self.__hasCal = True
 
@@ -161,5 +174,28 @@ class GradDesc(object):
     # 自定义数据显示方式，默认只输出结果公式，可重写为想要的方式
     def _showResultCustom(self):
         # 输出结果公式
-        func = self.__func
-        print(func)
+        module = self.__module
+        print(module)
+
+    # 返回函数的可计算公式
+    def getResultFunc(self):
+        # 若尚未计算或数据有变，则需要重新计算
+        if not self.__hasCal:
+            self.calModule()
+
+        rstParams = self.__rstParams
+
+        func = rstParams[0]
+        for i in range(len(self.__paramsName)):
+            symNames = self.__paramsName[i].split("*")
+            sym = 1
+            for symName in symNames:
+                tempSym = symName.split("^")
+                if float(tempSym[1]) < 0.00001:
+                    sym = sym*1
+                elif abs(float(tempSym[1])-1) < 0.0001:
+                    sym = sym*sp.Symbol(tempSym[0])
+                else:
+                    sym = sym*sp.Symbol(tempSym[0])**float(tempSym[1])
+            func = func + rstParams[i+1] * sym
+        return func
