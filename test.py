@@ -10,6 +10,7 @@ from gradDescObj import GradDesc
 from figGradDesc import FigGradDesc
 from polynomialGradDesc import PolynomialGradDesc
 from faceGradDesc import FaceGradDesc
+from logisticRegression import LogisticRegression
 
 # group, labels = kNN.createDataSet()
 
@@ -38,8 +39,10 @@ from faceGradDesc import FaceGradDesc
 # gdm.test(0.006)
 
 filePath = r"D:\computerScience\python3.7\mechanicLearning\ttt.txt"
-gd = FaceGradDesc(filePath, ["x^1", "y^1", "x^1*y^1", "x^2*y^1"], step=0.1)
+gd = LogisticRegression(
+    filePath, ["x^1", "y^1"], step=1)
 # gd = PolynomialGradDesc(filePath, 3, step=0.2)
 gd.showResult()
+print(gd.predict([3, 3]))
 # print("f = ", func)
 # print(func.subs(sp.Symbol("x"), 0))
