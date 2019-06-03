@@ -4,7 +4,7 @@ from sklearn import datasets, linear_model
 import matplotlib.pyplot as plt
 
 
-# 使用logistic函数作为激活函数的神经网络，三层,向量化计算
+# 使用logistic函数作为激活函数的神经网络，层数和各层节点数自定义，向量化计算
 class NeuralNetworkGeneric(object):
     def __init__(self, X, Y, layerNodes, step=0.1, regLambda=0.01):
         self.layerNodes = layerNodes
@@ -42,9 +42,12 @@ class NeuralNetworkGeneric(object):
                 elif abs(metrixY[i, j]) < 0.001:
                     sumLoss -= math.log2(1-probs[i, j])
         # 在损失上加上正则项（可选）
-        # itemLambda = self.regLambda/2 *\
-        #     (np.sum(np.square(W1[:, 1:])) + np.sum(np.square(W2[:, 1:])))
-        # sumLoss += itemLambda
+        itemLambda = 0
+        for i in range(len(W)):
+            itemLambda += np.sum(np.square(W[i][1:, :]))
+        itemLambda *= self.regLambda/2
+        sumLoss += itemLambda
+
         sumLoss /= self.numExamples
         return sumLoss
 
@@ -66,7 +69,7 @@ class NeuralNetworkGeneric(object):
 
         self.lossFunc = [nowLoss]
 
-        while nowLoss-lastLoss < -0.000001 or lastLoss == 0:
+        while nowLoss-lastLoss < -0.00001 or lastLoss == 0:
             # 正向传播，计算预测值
             A = [metrixX]
             tmpA = []
@@ -82,7 +85,7 @@ class NeuralNetworkGeneric(object):
 
             # 反向传播
             lastDelta = probs-metrixY
-            dW = [(tmpA[-1].T).dot(lastDelta)]
+            dW = [(tmpA[-1].T).dot(lastDelta)/self.numExamples]
             for i in range(self.layers-2):
                 nowDelta = lastDelta.dot(W[-i-1].T) * \
                     tmpA[-i-1]*(1-tmpA[-i-1])
@@ -90,20 +93,14 @@ class NeuralNetworkGeneric(object):
                     nowDelta[:, 1:].reshape(self.numExamples, W[-i-2].shape[1]))
                 tmpdW /= self.numExamples
                 dW.append(tmpdW)
-                lastDelta = nowDelta
+                lastDelta = nowDelta[:, 1:].reshape(
+                    (nowDelta.shape[0], nowDelta.shape[1]-1))
             dW.reverse()
-            # delta2 = (delta3.dot(W2.T))*tmpA2*(1-tmpA2)
 
-            # dW2 = (tmpA2.T).dot(delta3)
-            # dW1 = (tmpA1.T).dot(delta2[:, 1:].reshape(
-            #     numExamples, self.numHide))
-
-            # dW2 /= numExamples
-            # dW1 /= numExamples
-
-            # 正则化项
-            # dW2 += self.regLambda * W2
-            # dW1 += self.regLambda * W1
+            # 添加正则化项
+            for i in range(len(dW)):
+                dW[i][1:, :] += self.regLambda * \
+                    (W[i][1:, :].reshape(W[i].shape[0]-1, W[i].shape[1]))
 
             # 梯度下降更新参数
             for i in range(len(W)):
