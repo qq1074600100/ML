@@ -48,7 +48,7 @@ class NeuralNetworkVectorize(object):
                     sumLoss -= math.log2(1-probs[i, j])
         # 在损失上加上正则项（可选）
         itemLambda = self.regLambda/2 *\
-            (np.sum(np.square(W1[:, 1:])) + np.sum(np.square(W2[:, 1:])))
+            (np.sum(np.square(W1[1:, :])) + np.sum(np.square(W2[1:, :])))
         sumLoss += itemLambda
         sumLoss /= numExamples
         return sumLoss
@@ -96,8 +96,10 @@ class NeuralNetworkVectorize(object):
             dW1 /= numExamples
 
             # 正则化项
-            dW2 += self.regLambda * W2
-            dW1 += self.regLambda * W1
+            dW2[1:, :] += self.regLambda * \
+                (W2[1:, :].reshape(W2.shape[0]-1, W2.shape[1]))
+            dW1[1:, :] += self.regLambda * \
+                (W1[1:, :].reshape(W1.shape[0]-1, W1.shape[1]))
 
             # 梯度下降更新参数
             W2 = W2-self.step*dW2
