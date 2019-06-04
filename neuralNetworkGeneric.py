@@ -33,14 +33,11 @@ class NeuralNetworkGeneric(object):
             aNext = self.calLogisticFunc(zNext)
             A.append(aNext)
         probs = A[-1]
-        # 计算损失
-        sumLoss = 0
-        for i in range(self.numExamples):
-            for j in range(metrixY.shape[1]):
-                if abs(metrixY[i, j]-1) < 0.001:
-                    sumLoss -= math.log2(probs[i, j])
-                elif abs(metrixY[i, j]) < 0.001:
-                    sumLoss -= math.log2(1-probs[i, j])
+        # 计算损失，向量化
+        tmpMetrix = abs(metrixY-probs)
+        rstMetrix = -np.log2(1-tmpMetrix)
+        sumLoss = np.sum(rstMetrix)
+
         # 在损失上加上正则项（可选）
         itemLambda = 0
         for i in range(len(W)):
